@@ -1,9 +1,6 @@
-// npm install stuff
-// npm i request
-// npm i node-spotify-api
-// npm i moment
 
-var request = require("request");
+var request = require('request');
+var fs = require('fs')
 require("dotenv").config();
 
 
@@ -14,6 +11,7 @@ var spotifyRequest = function (track) {
 
     var Spotify = require('node-spotify-api');
     var spotify = new Spotify(keys.spotify);
+
     spotify.search({ type: 'track', query: track }, function(err, data) {
         if (err) {
         return console.log('Error occurred:  err');
@@ -29,26 +27,60 @@ var spotifyRequest = function (track) {
 
 //omdb request
 var omdbRequest = function(movie) {
-    var movieName = movie.replace(" ", "+");
-    var queryUrl = "http://www.omdbapi.com/?t=" + movieName + "&y=&plot=short&apikey=trilogy";
+    var omdbURL = "http://www.omdbapi.com/?t=" + movie + "&y=&plot=short&tomatoes=true&apikey=trilogy";
+    
+    request (omdbURL, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var body = JSON.parse(body);
 
-    var request = require('request');
-    request(queryUrl, function (error, response, body) {
-        var omdbObject = body;
+            console.log(`Title: ${body.Title}`);
+            console.log(`Release Year: ${body.Year}`);
+            console.log(`IMDb Rating: ${body.imdbRating}`);
+            console.log(`Country: ${body.Country}`);
+            console.log(`Language: ${body.Language}`);
+            console.log(`Plot: ${body.Plot}`);
+            console.log(`Actors: ${body.Actors}`);
+            console.log(`Rotten Tomatoes Rating: ${body.tomatoRating}`);
+            console.log(`Rotten Tomatoes URL: ${body.tomatoURL}`);
 
-        omdbObject = omdbObject.replace("{", "");
-        omdbObject = omdbObject.replace("}", "");
-        omdbObject = omdbObject.split(",");
+        } else {
+            console.log("there was an error with your request");
 
-        console.log('error:', error); // Print the error if one occurred
-        console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-        // console.log('body:', omdbObject[0]); // Print the HTML for the Google homepage.
-        console.log(omdbObject[0])
+        };
     });
 };
+
+// bands in town request
+var bandsInTownRequest= function(artist) {
+    var concertsURL = "https://rest.bandsintown.com/artists/" + artist + "/events?app_id=codingbootcamp"
+
+    request(concertsURL, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            var body = JSON.parse(body);
+        
+            console.log(`Artist: ${body.artistData.name}`);
+            console.log(`Date: ${body.eventData.datetime}`);
+            console.log(`Venue: ${body.venueData.name}`);
+        } else {
+            console.log("There was an error with your request")
+        };
+    });
+};
+
+// reads the random.txt file
+var readText = function() {
+    fs.readFile('random.txt', "utf8", function(error, data){
+        var txt = data.split(',');
+        spotifyRequest(txt[1]);
+    });
+}
 
 if (process.argv[2] === 'spotify-this-song') {
     spotifyRequest(process.argv[3]);
 } else if (process.argv[2] === 'movie-this') {
     omdbRequest(process.argv[3]);
+} else if (process.argv[2] === 'concert-this') {
+    bandsInTownRequest(process.argv[3]);
+} else if (process.argv[2] === 'do-what-it-says') {
+    readText();
 }; 
